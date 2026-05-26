@@ -25,4 +25,9 @@ A civic tech web app that allows citizens to report garbage dump locations in th
 
 1. Clone the repo
 2. Run `npm install`
+<<<<<<< HEAD
 3. Create `.env` file with your Supabase credentials:
+=======
+3. Create `.env` file with your Supabase credentials:
+4. 
+>>>>>>> 2a2aea1e637bdade7aefec5b6168b2456900d487
