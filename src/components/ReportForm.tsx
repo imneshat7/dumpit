@@ -26,7 +26,7 @@ export default function ReportForm() {
         setLoading(true);
 
         try {
-            const { lat, lng } = await getLocation();t
+            const { lat, lng } = await getLocation();
             
 
             const {

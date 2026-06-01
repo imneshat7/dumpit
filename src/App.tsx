@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import ReportForm from './components/ReportForm'
+import AdminDashboard from './components/AdminDashboard'
 
 export default function App() {
   const [email, setEmail] = useState('')
@@ -8,20 +9,32 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [user, setUser] = useState<any>(null)
+  const [role, setRole] = useState<string | null>(null)
 
   useEffect(() => {
-    // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
+      if (session?.user) fetchRole(session.user.id)
     })
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      if (session?.user) fetchRole(session.user.id)
+      else setRole(null)
     })
 
     return () => subscription.unsubscribe()
   }, [])
+
+  const fetchRole = async (userId: string) => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single()
+
+    if (data) setRole(data.role)
+  }
 
   const handleSignIn = async () => {
     setLoading(true)
@@ -34,7 +47,7 @@ export default function App() {
     setLoading(true)
     const { error } = await supabase.auth.signUp({ email, password })
     if (error) setMessage(error.message)
-    else setMessage('Check your email to confirm your account')
+    else setMessage('Account created. You can now sign in.')
     setLoading(false)
   }
 
@@ -42,19 +55,27 @@ export default function App() {
     await supabase.auth.signOut()
   }
 
-  if (user) {
+  if (user && role) {
     return (
-      <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-md mb-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-green-700">DumpIt</h1>
-          <button
-            className="text-sm text-red-500 underline"
-            onClick={handleSignOut}
-          >
-            Sign Out
-          </button>
+      <div className="min-h-screen bg-gray-100">
+        <div className="flex justify-between items-center px-6 py-4 bg-white shadow">
+          <h1 className="text-xl font-bold text-green-700">DumpIt</h1>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-500 capitalize">{role}</span>
+            <button
+              className="text-sm text-red-500 underline"
+              onClick={handleSignOut}
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
-        <ReportForm />
+
+        <div className="flex justify-center p-6">
+          {role === 'admin' && <AdminDashboard />}
+          {role === 'citizen' && <ReportForm />}
+          {role === 'field_worker' && <p>Field Worker view coming soon.</p>}
+        </div>
       </div>
     )
   }
