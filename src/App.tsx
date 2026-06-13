@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
 import ReportForm from './components/ReportForm'
 import AdminDashboard from './components/AdminDashboard'
+import FieldWorkerDashboard from './components/FieldWorkerDashboard' // ADD THIS
+
 
 export default function App() {
   const [email, setEmail] = useState('')
@@ -74,7 +76,7 @@ export default function App() {
         <div className="flex justify-center p-6">
           {role === 'admin' && <AdminDashboard />}
           {role === 'citizen' && <ReportForm />}
-          {role === 'field_worker' && <p>Field Worker view coming soon.</p>}
+          {role === 'field_worker' &&  <FieldWorkerDashboard />}
         </div>
       </div>
     )

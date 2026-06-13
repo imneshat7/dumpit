@@ -29,9 +29,7 @@ export default function ReportForm() {
             const { lat, lng } = await getLocation();
             
 
-            const {
-                data: { user },
-            } = await supabase.auth.getUser();
+            const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("Not logged in");
 
             const fileExt = photo.name.split(".").pop();

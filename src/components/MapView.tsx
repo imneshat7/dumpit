@@ -7,6 +7,7 @@ interface Props {
     reports: Report[];
 }
 
+
 export default function MapView({ reports }: Props) {
     useEffect(() => {
         const map = L.map("map").setView([25.2, 85.2], 12);
@@ -17,8 +18,8 @@ export default function MapView({ reports }: Props) {
 
         reports.forEach((report) => {
             L.marker([report.lat, report.lng]).addTo(map).bindPopup(`
- <b>${report.description}</b><br/>
-          Status: ${report.status}
+            <b>${report.description}</b><br/>
+            Status: ${report.status}
         `);
         });
 
