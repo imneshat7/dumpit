@@ -1,25 +1,50 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "../supabaseClient";
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export default function ReportForm() {
     const [description, setDescription] = useState("");
     const [photo, setPhoto] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
+    const [isSuccess, setIsSuccess] = useState(false); // tracks message type for styling
+    const fileInputRef = useRef<HTMLInputElement>(null); // needed to manually clear file input
 
     const getLocation = (): Promise<{ lat: number; lng: number }> => {
         return new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(
                 (pos) =>
                     resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-                (err) => reject(err),
+                (err) => {
+                    // Map cryptic browser error codes to readable messages
+                    if (err.code === err.PERMISSION_DENIED) {
+                        reject(new Error("Location permission denied. Enable location access in your browser settings and try again."));
+                    } else if (err.code === err.POSITION_UNAVAILABLE) {
+                        reject(new Error("Could not detect your location. Check your GPS or network connection."));
+                    } else if (err.code === err.TIMEOUT) {
+                        reject(new Error("Location request timed out. Try again."));
+                    } else {
+                        reject(new Error("Could not get your location."));
+                    }
+                },
+                { timeout: 10000 }
             );
         });
     };
 
     const handleSubmit = async () => {
-        if (!photo || !description) {
+        const trimmedDescription = description.trim();
+
+        if (!photo || !trimmedDescription) {
             setMessage("Please add a photo and description");
+            setIsSuccess(false);
+            return;
+        }
+
+        if (photo.size > MAX_FILE_SIZE) {
+            setMessage("Photo is too large. Max size is 5MB.");
+            setIsSuccess(false);
             return;
         }
 
@@ -27,7 +52,6 @@ export default function ReportForm() {
 
         try {
             const { lat, lng } = await getLocation();
-            
 
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("Not logged in");
@@ -50,17 +74,22 @@ export default function ReportForm() {
                 photo_url: urlData.publicUrl,
                 lat,
                 lng,
-                description,
+                description: trimmedDescription,
                 status: "reported",
             });
 
             if (insertError) throw insertError;
 
             setMessage("Report submitted successfully!");
+            setIsSuccess(true);
             setDescription("");
             setPhoto(null);
+
+            // Native file inputs ignore state changes — must clear manually
+            if (fileInputRef.current) fileInputRef.current.value = "";
         } catch (err: any) {
             setMessage(err.message || "Something went wrong");
+            setIsSuccess(false);
         }
 
         setLoading(false);
@@ -79,6 +108,7 @@ export default function ReportForm() {
             />
 
             <input
+                ref={fileInputRef}
                 className="w-full mb-4"
                 type="file"
                 accept="image/*"
@@ -86,7 +116,7 @@ export default function ReportForm() {
             />
 
             <button
-                className="w-full bg-green-600 text-white p-2 rounded"
+                className="w-full bg-green-600 text-white p-2 rounded disabled:opacity-50"
                 onClick={handleSubmit}
                 disabled={loading}
             >
@@ -94,7 +124,9 @@ export default function ReportForm() {
             </button>
 
             {message && (
-                <p className="mt-4 text-sm text-center text-red-500">{message}</p>
+                <p className={`mt-4 text-sm text-center ${isSuccess ? "text-green-600" : "text-red-500"}`}>
+                    {message}
+                </p>
             )}
         </div>
     );
