@@ -79,6 +79,14 @@ You'll need your own Supabase project with the `profiles` and `reports` tables, 
 - Role assignment is manual (by design, see above) — there's no admin UI to promote a user yet.
 - No retry/offline handling if a citizen submits a report with a weak signal.
 
-## Planned (v2)
 
-- AI-powered waste classification from the uploaded photo, with a heatmap view of dump density across the town.
+## AI Feature (v2 — in progress)
+
+When a citizen uploads a photo, the image is sent to a Node.js/Express backend which calls the Gemini Vision API to:
+- Classify the waste type (Plastic Waste, Organic Waste, Construction Debris, etc.)
+- Auto-generate a description of what's visible in the photo
+
+The citizen can edit the AI-generated description before submitting. The waste type is stored in Supabase and displayed on the admin dashboard alongside each report.
+
+**Backend repo:** [github.com/imneshat7/dumpit-server](https://github.com/imneshat7/dumpit-server)  
+**Status:** Built and tested locally. Backend deployment pending.
